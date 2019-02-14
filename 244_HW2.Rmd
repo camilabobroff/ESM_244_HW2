@@ -1,0 +1,85 @@
+---
+title: "ESM_244_HW2"
+author: "Camila Bobroff"
+date: "2/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(RColorBrewer)
+```
+
+```{r}
+captive_cetacean <- read_csv("captive_cetacean.csv")
+```
+
+```{r}
+#Exploring
+ggplot(captive_cetacean, aes(x = species))+
+  geom_bar()
+
+#Top 3 cetacean species in captivity
+captive_top3 <- captive_cetacean %>% 
+  filter(status == "Alive") %>% 
+  count(species) %>% 
+  top_n(3)
+
+#Dolphins are the most common cetacean in captivity, followed by Orca and Beluga
+
+captive_top3 <- captive_cetacean %>% 
+  filter(species == "Bottlenose" | 
+           species == "Killer Whale; Orca" | 
+           species == "Beluga", 
+         status == "Alive") %>% 
+  select(species, name, sex, birthYear, originLocation, transfers, currently) %>% 
+  mutate(age = 2019-as.numeric(birthYear))
+
+captive_ages <- captive_top3 %>% 
+  ggplot(aes(x = age)) + 
+  geom_bar(aes(fill = species)) +
+  scale_fill_manual(values = c("darkgoldenrod4", "cyan4", "steelblue4"))
+
+captive_ages
+
+captive_dolphin_age <- captive_cetacean %>% 
+  filter(species == "Bottlenose", status == "Alive") %>% 
+  select(name, sex, birthYear, originLocation, transfers, currently) %>% 
+  mutate(age = 2019-as.numeric(birthYear)) %>% 
+  ggplot(aes(x = age)) +
+  geom_bar()
+  
+captive_dolphin_age
+
+captive_orca_age <- captive_cetacean %>% 
+  filter(species == "Killer Whale; Orca", status == "Alive") %>% 
+  select(name, sex, birthYear, originLocation, transfers, currently) %>% 
+  mutate(age = 2019-as.numeric(birthYear)) %>% 
+  ggplot(aes(x = age)) +
+  geom_bar()
+  
+captive_orca_age
+
+captive_beluga_age <- captive_cetacean %>% 
+  filter(species == "Beluga", status == "Alive") %>% 
+  select(name, sex, birthYear, originLocation, transfers, currently) %>% 
+  mutate(age = 2019-as.numeric(birthYear)) %>% 
+  ggplot(aes(x = age)) +
+  geom_bar()
+  
+captive_beluga_age
+
+
+#Cetaceans currently in captivity
+cetacean_alive <- captive_cetacean %>% 
+  filter(status == "Alive") %>% 
+  ggplot(aes(x = species)) +
+  geom_bar()
+
+cetacean_alive
+```
+
