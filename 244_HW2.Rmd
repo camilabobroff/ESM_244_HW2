@@ -9,43 +9,22 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r load packages, include=FALSE}
 library(tidyverse)
 library(RColorBrewer)
+library(janitor)
 ```
 
-```{r}
+###Task 1: Data wrangling and visualization - cetations in captivity
+```{r Task 1 data, include=FALSE}
 captive_cetacean <- read_csv("captive_cetacean.csv")
 ```
 
-```{r}
-#Exploring
+```{r Task 1 exploration, include = FALSE, warning=FALSE}
 ggplot(captive_cetacean, aes(x = species))+
   geom_bar()
 
-#Top 3 cetacean species in captivity
-captive_top3 <- captive_cetacean %>% 
-  filter(status == "Alive") %>% 
-  count(species) %>% 
-  top_n(3)
-
-#Dolphins are the most common cetacean in captivity, followed by Orca and Beluga
-
-captive_top3 <- captive_cetacean %>% 
-  filter(species == "Bottlenose" | 
-           species == "Killer Whale; Orca" | 
-           species == "Beluga", 
-         status == "Alive") %>% 
-  select(species, name, sex, birthYear, originLocation, transfers, currently) %>% 
-  mutate(age = 2019-as.numeric(birthYear))
-
-captive_ages <- captive_top3 %>% 
-  ggplot(aes(x = age)) + 
-  geom_bar(aes(fill = species)) +
-  scale_fill_manual(values = c("darkgoldenrod4", "cyan4", "steelblue4"))
-
-captive_ages
-
+# Captive cetacean ages graphed separately
 captive_dolphin_age <- captive_cetacean %>% 
   filter(species == "Bottlenose", status == "Alive") %>% 
   select(name, sex, birthYear, originLocation, transfers, currently) %>% 
@@ -73,7 +52,6 @@ captive_beluga_age <- captive_cetacean %>%
   
 captive_beluga_age
 
-
 #Cetaceans currently in captivity
 cetacean_alive <- captive_cetacean %>% 
   filter(status == "Alive") %>% 
@@ -81,5 +59,121 @@ cetacean_alive <- captive_cetacean %>%
   geom_bar()
 
 cetacean_alive
+
 ```
 
+```{r Task 1 graph, echo=FALSE, warning=FALSE}
+#Top 3 cetacean species in captivity
+captive_top3 <- captive_cetacean %>% 
+  filter(status == "Alive") %>% 
+  count(species) %>% 
+  top_n(3)
+
+#Dolphins are the most common cetacean in captivity, followed by Orca and Beluga
+
+captive_top3 <- captive_cetacean %>% 
+  filter(species == "Bottlenose" | 
+           species == "Killer Whale; Orca" | 
+           species == "Beluga", 
+         status == "Alive") %>% 
+  select(species, name, sex, birthYear, originLocation, transfers, currently) %>% 
+  mutate(age = 2019-as.numeric(birthYear)) %>% 
+  arrange(desc(species)) 
+
+captive_top3$species <- fct_relevel(captive_top3$species, "Beluga", "Killer Whale; Orca", "Bottlenose") 
+
+captive_ages <- captive_top3 %>% 
+  ggplot(aes(x = age)) + 
+  geom_bar(aes(fill = species), levels = c("Bottlenose", "Killer Whale; Orca", "Beluga")) +
+  scale_fill_manual(values = c("goldenrod3", "coral3", "cadetblue4"), labels = c("Beluga", "Orca", "Bottlenose")) +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_minimal() +
+  labs(x = "Age", y = "Frequency")
+
+captive_ages
+
+```
+**Figure 1. Cetacean Age**  
+Sources: 
+
+###Task 2: Parameter Estimation – Wild Fish Catch
+```{r Task 2 data, include=FALSE, warning=FALSE}
+fish_catch <- read_csv("fish_catch_clean.csv") %>% 
+  clean_names() %>% 
+  mutate(year = 0:62) %>% 
+  select(year, wild_catch)
+```
+
+####a) Exploratory graph of wild catch over time
+```{r Task 2 exploratory graph, echo=FALSE, warning=FALSE}
+# Plot wild catch over time
+ggplot(fish_catch, aes(x = year, y = wild_catch)) +
+  geom_point()
+
+```
+
+```{r}
+# Find estimates for logistic growth:
+
+# N = A/(1 + Be^(-rt))
+# Estimate for carrying capacity: 85
+# Ok, now if N0 is 20, what is B? ~3.25
+# inital r estimate ~ 0.1035 (see line 50)
+
+BEstimate <- (85 - 20)/20 # Getting estimates based on the data!
+
+# based on our graph, it looks like exponential growth dominates between t = 1950 (0) to t = 1953 (3) 
+
+# Now, we're going to estimate r (the growth rate)
+#lag_phase <- fish_catch %>% 
+  #filter(time > 15, time < 35)
+
+#ggplot(lag_phase, aes(x = year, y = log(fish_catch))) +
+  #geom_point() # because this looks linear, we're on the right track!
+
+#lm(log(CellCount) ~ Time, data = lag_phase) # r ~ 0.1035
+```
+
+# N = A/(1 + Be^(-rt))
+####b) The trend in the exploratory graph of wild catch over time is logistic. 
+$N = \frac{A}{1 + B*e^(-r*t)}$
+
+$\frac{dN}{dt} = rN(1- \left(\frac{N}{K}\right)$  
+Initial Estimates:  
+$r$ = (exponential growth  
+$N$ = amount   
+$K$ = maximum carrying capacity  
+
+###Task 3: Bootstrapped Confidence Interval for Proportions
+```{r}
+
+
+
+```
+
+
+###Task 4: Watch 3 RStudio::conf talks
+a) Talk title and speaker name
+b) Two bulletpoints (for each talk), interesting things that you learned
+c) One question that you would have liked to asked the speaker
+
+The next million R users - Carl Howe  
+- RStudio's Mission: Equip everyone, regardless of means, to participate in a global economy that rewards data literacy. RStudio Education's mission: Train the next million R users.  
+- Males made up 75% of respondents of the survey... not doing as well as anticipated.  
+- Inspiring to see that the mean age that folks started using R was age 30! I'm not too late :)  
+- What keeps people from using R : Error messages (R users) and languange syntax & getting started (Non-Users, small sample)  
+- RStudio primers to learn R on your own!  
+Question: How do you plan to increase the diversity of R users, particularly women and people of color?
+
+The resilient R champion - Tonya Filz  
+- Barriers faced by R Champion: Open source mentality (why trust open source tools), funding, IT support, internal political pressure.  
+- To overcome funding barriers, create demand for data products/assets using Open Source tools. Really show your organization what R can do (i.e. Shiny). Communicate all the possibilities!   
+- Ask lots of questions to figure out what the organization really needs and consider whether it can be accomplished using R open source tools. More tools is not always bad.  
+Question: What are some examples of organizations that have successfully started using R? Any public sector or non-profit organizaions?
+
+Teaching R using inclusive pedagogy: Practices and lessons learned from over 700 Carpentries workshops - Tracy Teal  
+- "Data becomes a tool of profound social change or a weapon of political warfare -- depending on whose hands it is in" Yeshimabeit Milner, Executive Director and Founder of Data for Black Lives. Data is power and the questions asked will depend on who is asking them.  
+- The Carpentries is an open, global community teaching researchers the skills to turn data into knowledge.  
+- Growth mindset with inclusive pedagogy - confidence, focus on effort and incremental learning, not outcomes. Seeing mistakes as opportunities for learning, safe space for continues learning.  
+Question: What are some changes that The Carpentries will be making in order to reach more broad and diverse communities?
