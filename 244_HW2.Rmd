@@ -126,8 +126,8 @@ BEstimate <- (85 - 20)/20 # Getting estimates based on the data!
 # based on our graph, it looks like exponential growth dominates between t = 1950 (0) to t = 1953 (3) 
 
 # Now, we're going to estimate r (the growth rate)
-#lag_phase <- fish_catch %>% 
-  #filter(time > 15, time < 35)
+lag_phase <- fish_catch %>% 
+  filter(time > 15, time < 35)
 
 #ggplot(lag_phase, aes(x = year, y = log(fish_catch))) +
   #geom_point() # because this looks linear, we're on the right track!
