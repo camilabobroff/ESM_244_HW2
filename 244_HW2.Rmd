@@ -1,5 +1,5 @@
 ---
-title: "ESM_244_HW2"
+title: "ESM 244 Assignment 2"
 author: "Camila Bobroff"
 date: "2/14/2019"
 output: html_document
@@ -16,12 +16,12 @@ library(janitor)
 library(boot)
 ```
 
-###Task 1: Data wrangling and visualization - cetations in captivity
-```{r Task 1 data, include=FALSE}
+###Task 1: Cetaceans in Captivity
+```{r Task 1 data, include=FALSE, warning=FALSE, message=FALSE}
 captive_cetacean <- read_csv("captive_cetacean.csv")
 ```
 
-```{r Task 1 exploration, include = FALSE, warning=FALSE}
+```{r Task 1 exploration, include = FALSE, warning=FALSE, message=FALSE}
 ggplot(captive_cetacean, aes(x = species))+
   geom_bar()
 
@@ -63,14 +63,11 @@ cetacean_alive
 
 ```
 
-```{r Task 1 graph, echo=FALSE, warning=FALSE}
-#Top 3 cetacean species in captivity
+```{r Task 1 graph, warning=FALSE, message=FALSE}
 captive_top3 <- captive_cetacean %>% 
   filter(status == "Alive") %>% 
   count(species) %>% 
   top_n(3)
-
-#Dolphins are the most common cetacean in captivity, followed by Orca and Beluga
 
 captive_top3 <- captive_cetacean %>% 
   filter(species == "Bottlenose" | 
@@ -86,7 +83,7 @@ captive_top3$species <- fct_relevel(captive_top3$species, "Beluga", "Killer Whal
 captive_ages <- captive_top3 %>% 
   ggplot(aes(x = age)) + 
   geom_bar(aes(fill = species), levels = c("Bottlenose", "Killer Whale; Orca", "Beluga")) +
-  scale_fill_manual(values = c("goldenrod3", "coral3", "cadetblue4"), labels = c("Beluga", "Orca", "Bottlenose")) +
+  scale_fill_manual(values = c("darkgoldenrod4", "firebrick4", "cadetblue4"), labels = c("Beluga", "Orca", "Bottlenose")) +
   scale_x_continuous(expand = c(0,0)) +
   scale_y_continuous(expand = c(0,0)) +
   theme_minimal() +
@@ -96,8 +93,10 @@ captive_ages
 
 ```
   
-**Figure 1. Cetacean Age**  
-Sources: 
+**Figure 1. Ages of Cetaceans Born in Captivity**  
+Current ages of the three most common cetaceans born in captivity in the United States: Bottlenose Dolphins, Orcas, and Beluga Whales. 
+Sources: Amber Thomas, The Pudding, July 2017.  
+US National Marine Mammal Inventory (June 2015) and Ceta-Base (May 2017).
 
 ###Task 2: Parameter Estimation – Wild Fish Catch
 ```{r Task 2 data, include=FALSE, warning=FALSE}
@@ -127,7 +126,7 @@ $N_t = \left(\frac{A}{1 + \beta e^{-rt}}\right)$
 
 - $r = .025$
 
-```{r}
+```{r Task 2 estimates, include = FALSE, message=FALSE, warning=FALSE}
 # Finding estimates for logistic growth:
 
 # N = A/(1 + Be^(-rt))
@@ -150,13 +149,18 @@ lm(log(wild_catch) ~ year, data = fish_catch)
 # r ~ 0.025
 ```
 
-```{r Task 2 nls, echo=FALSE}
+####c) Nonlinear least squares parameters
+- $A = 100$ million tons
+
+- $\beta = 4.32$   
+
+- $r = .07$ million tons of wild fish caught per year (growth rate estimate when exponential growth dominates)
+
+```{r Task 2 nls, include = FALSE}
 
 fish_fit <- nls(wild_catch ~ A/(1+B*exp(-r*year)),
                 start = list(A = 85, B = 3.25, r = 0.025),
                 data = fish_catch, trace = TRUE)
-
-fish_fit
 
 # Store the model coefficients
 A <- coef(fish_fit)[1]
@@ -165,18 +169,17 @@ r <- coef(fish_fit)[3]
 
 ```
 
-```{r Task 2 graph}
+####d) Final graph of original data and model output
+```{r Task 2 graph, warning=FALSE, message=FALSE}
 # Create a new sequence of time values (time_seq)
-time_seq <- seq(0,65, length = 500) # 100 observations, so it's not so choppy 
+time_seq <- seq(0,65, length = 500)
 
-# Plug that new sequence into my model with the parameters A, B and r that we found:
-
+# Plug that new sequence into my model with the parameters A, B and r that were found:
 fish_pred <- A/(1 + B * exp(-r*time_seq)) # Predictions based on time_seq
-# Bind that together with the time_seq data:
+# Bind with the time_seq data:
 pred_df <- data.frame(time_seq, fish_pred)
 
-# Create a graph with the original data and our model predictions:
-
+# Graph with the original data and model predictions:
 ggplot(fish_catch, aes(x = year, y = wild_catch)) +
   geom_point(color = "steelblue4", size = 3) +
   geom_line(data = pred_df, aes(x = time_seq, y = fish_pred), color = "gray26", size = 1) +
@@ -190,17 +193,11 @@ ggplot(fish_catch, aes(x = year, y = wild_catch)) +
 
 ###Task 3: Bootstrapped Confidence Interval for Proportions
 ```{r Task 3, warning=FALSE, message=FALSE}
-# Find confidence interval for the proportion of nonbinary/genderqueer students experiencing exlusionary, hostile, or intimidating conduct at UCSB.
-# n = 36, 22 = identified as having personally experienced exlusionary, hostile, or intimidating conduct at UCSB.
-
+# Find confidence interval for the proportion of nonbinary/genderqueer students experiencing exclusionary, hostile, or intimidating conduct at UCSB.N = 36, 22 identified as having personally experienced exclusionary, hostile, or intimidating conduct at UCSB.
 
 # create a vector of proportions to use for bootstrapping
 # 1 = experience exclusionary conduct 0= did not experience exclusionary conduct
-
 exclusionary_conduct <- c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-
-# test that the proportion of students experiencing exclusionary conduct in created data is the same as reported (61%)
-mean(exclusionary_conduct)
 
 exclusion_function <- function(x,i) {mean(x[i])} # i accounts for the different bootstrap samples, x is the bootstrap sample
 
@@ -209,26 +206,21 @@ boot_100000 <- boot(exclusionary_conduct, exclusion_function, R = 100000)
 
 ggplot() +
   aes(boot_100000$t) +
-  geom_histogram() # Check bias and intervals for convergence.
+  geom_histogram()
 
 # Calculate the confidence interval using the boot.ci() function in the boot package
-
 boot.ci(boot_100000, conf = 0.95)
-# 95% (0.4444, 0.7778)
 ```
-The proportion of nonbinary and gender-queer students who experience exlusionary, hostile, or intimidating conduct is 61% (n = 36), with a bootstrapped 95% confidence interval of [44, 78] percent (n = 100,000 bootstrap samples).  
+The proportion of nonbinary and gender-queer students who experience exclusionary, hostile, or intimidating conduct is 61% (n = 36), with a bootstrapped 95% confidence interval of [44, 78] percent (n = 100,000 bootstrap samples).  
 Source: 2014 UCSB Campus Climate Project Final Report, prepared by Rankin & Associates Consulting: http://campusclimate.ucop.edu/_common/files/pdf-climate/ucsb-full-report.pdf
 
 ###Task 4: Watch 3 RStudio::conf talks
-a) Talk title and speaker name
-b) Two bulletpoints (for each talk), interesting things that you learned
-c) One question that you would have liked to asked the speaker
 
 The next million R users - Carl Howe  
 - RStudio's Mission: Equip everyone, regardless of means, to participate in a global economy that rewards data literacy. RStudio Education's mission: Train the next million R users.  
 - Males made up 75% of respondents of the survey... not doing as well as anticipated.  
 - Inspiring to see that the mean age that folks started using R was age 30! I'm not too late :)  
-- What keeps people from using R : Error messages (R users) and languange syntax & getting started (Non-Users, small sample)  
+- What keeps people from using R : Error messages (R users) and language syntax & getting started (Non-Users, small sample)  
 - RStudio primers to learn R on your own!  
 Question: How do you plan to increase the diversity of R users, particularly women and people of color?
 
@@ -236,7 +228,7 @@ The resilient R champion - Tonya Filz
 - Barriers faced by R Champion: Open source mentality (why trust open source tools), funding, IT support, internal political pressure.  
 - To overcome funding barriers, create demand for data products/assets using Open Source tools. Really show your organization what R can do (i.e. Shiny). Communicate all the possibilities!   
 - Ask lots of questions to figure out what the organization really needs and consider whether it can be accomplished using R open source tools. More tools is not always bad.  
-Question: What are some examples of organizations that have successfully started using R? Any public sector or non-profit organizaions?
+Question: What are some examples of organizations that have successfully started using R? Any public sector or non-profit organizations?
 
 Teaching R using inclusive pedagogy: Practices and lessons learned from over 700 Carpentries workshops - Tracy Teal  
 - "Data becomes a tool of profound social change or a weapon of political warfare -- depending on whose hands it is in" Yeshimabeit Milner, Executive Director and Founder of Data for Black Lives. Data is power and the questions asked will depend on who is asking them.  
