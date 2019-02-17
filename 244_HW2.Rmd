@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(RColorBrewer)
 library(janitor)
+library(boot)
 ```
 
 ###Task 1: Data wrangling and visualization - cetations in captivity
@@ -94,6 +95,7 @@ captive_ages <- captive_top3 %>%
 captive_ages
 
 ```
+  
 **Figure 1. Cetacean Age**  
 Sources: 
 
@@ -174,19 +176,48 @@ fish_pred <- A/(1 + B * exp(-r*time_seq)) # Predictions based on time_seq
 pred_df <- data.frame(time_seq, fish_pred)
 
 # Create a graph with the original data and our model predictions:
+
 ggplot(fish_catch, aes(x = year, y = wild_catch)) +
   geom_point(color = "steelblue4", size = 3) +
-  geom_line(data = pred_df, aes(x = time_seq, y = fish_pred), color = "gray26", size = 1)
+  geom_line(data = pred_df, aes(x = time_seq, y = fish_pred), color = "gray26", size = 1) +
+  labs(x = "Year (0 = 1950)", y = "Wild Fish Catch (million tons)") +
+  scale_x_continuous(expand = c(0,0.5), limits = c(0, 65), breaks = seq(0,65, by = 10)) +
+  scale_y_continuous(expand = c(0,0), limits = c(10,100), breaks = seq(0,100, by = 10)) +
+  theme_light()
+  
 ```
 
 
 ###Task 3: Bootstrapped Confidence Interval for Proportions
-```{r}
+```{r Task 3, warning=FALSE, message=FALSE}
+# Find confidence interval for the proportion of nonbinary/genderqueer students experiencing exlusionary, hostile, or intimidating conduct at UCSB.
+# n = 36, 22 = identified as having personally experienced exlusionary, hostile, or intimidating conduct at UCSB.
 
 
+# create a vector of proportions to use for bootstrapping
+# 1 = experience exclusionary conduct 0= did not experience exclusionary conduct
 
+exclusionary_conduct <- c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+
+# test that the proportion of students experiencing exclusionary conduct in created data is the same as reported (61%)
+mean(exclusionary_conduct)
+
+exclusion_function <- function(x,i) {mean(x[i])} # i accounts for the different bootstrap samples, x is the bootstrap sample
+
+set.seed(10) # keeps the outcome of the next line of code the same
+boot_100000 <- boot(exclusionary_conduct, exclusion_function, R = 100000)
+
+ggplot() +
+  aes(boot_100000$t) +
+  geom_histogram() # Check bias and intervals for convergence.
+
+# Calculate the confidence interval using the boot.ci() function in the boot package
+
+boot.ci(boot_100000, conf = 0.95)
+# 95% (0.4444, 0.7778)
 ```
-
+The proportion of nonbinary and gender-queer students who experience exlusionary, hostile, or intimidating conduct is 61% (n = 36), with a bootstrapped 95% confidence interval of [44, 78] percent (n = 100,000 bootstrap samples).  
+Source: 2014 UCSB Campus Climate Project Final Report, prepared by Rankin & Associates Consulting: http://campusclimate.ucop.edu/_common/files/pdf-climate/ucsb-full-report.pdf
 
 ###Task 4: Watch 3 RStudio::conf talks
 a) Talk title and speaker name
